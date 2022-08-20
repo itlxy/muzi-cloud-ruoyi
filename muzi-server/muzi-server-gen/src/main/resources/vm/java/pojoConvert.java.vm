@@ -1,0 +1,47 @@
+package ${packageName}.convert.po2pojo;
+
+import ${packageName}.entity.${ClassName}Entity;
+import ${packageName}.excel.${ClassName}Excel;
+import ${packageName}.vo.${ClassName}VO;
+import ${packageName}.form.${ClassName}Form;
+import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
+import org.mapstruct.factory.Mappers;
+import java.util.List;
+
+/**
+ * ${functionName}对象转换
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Mapper(componentModel = "spring",unmappedSourcePolicy = ReportingPolicy.IGNORE,unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface ${ClassName}POJOConvert {
+    /** 生成转换实例 */
+    ${ClassName}POJOConvert INSTANCE= Mappers.getMapper(${ClassName}POJOConvert.class);
+
+    /**
+     * 实体转vo
+     *
+     * @param ${className}Entity 实体
+     * @return vo实体
+     **/
+    ${ClassName}VO to${ClassName}VO(${ClassName}Entity ${className}Entity);
+
+    /**
+     * 表单对象转实体
+     *
+     * @param ${className}Form 表单实体
+     * @return 实体
+     **/
+    ${ClassName}Entity to${ClassName}Entity(${ClassName}Form ${className}Form);
+
+    /**
+     * excel对象转实体
+     *
+     * @param ${className}Excel excel实体
+     * @return 实体
+     **/
+    ${ClassName}Entity to${ClassName}Entity(${ClassName}Excel ${className}Excel);
+
+}

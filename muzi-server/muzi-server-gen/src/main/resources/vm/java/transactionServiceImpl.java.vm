@@ -1,0 +1,44 @@
+package ${packageName}.transaction.impl;
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import ${packageName}.entity.${ClassName}Entity;
+import ${packageName}.mapper.${ClassName}Mapper;
+import ${packageName}.transaction.${ClassName}TransactionService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+/**
+ * ${functionName}TransactionService事务业务处理层
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Service
+public class ${ClassName}TransactionServiceImpl implements ${ClassName}TransactionService {
+    @Resource
+    private ${ClassName}Mapper ${className}Mapper;
+
+    @Override
+    @Transactional
+    public void moreUpdateByIdAndVersion(List<${ClassName}Entity> ${className}List) {
+        for(int i=0;i<${className}List.size();i++){
+            LambdaUpdateWrapper<${ClassName}Entity> updateWrapper=new LambdaUpdateWrapper();
+            ${ClassName}Entity ${className}=${className}List.get(i);
+            updateWrapper.eq(${ClassName}Entity::getId,${className}.getId());
+            updateWrapper.eq(${ClassName}Entity::getRecordVersion,${className}.getRecordVersion());
+            //使用注解来判断是否更新成功，失败的话返回异常
+            ${className}Mapper.updateByIdAndVersion(1,${className});
+        }
+    }
+
+    @Override
+    @Transactional
+    public void batchUpdateDelFlagByIdAndVersion(boolean delFlag,List<${ClassName}Entity> ${className}List) {
+        //使用注解判断是否更新成功，失败返回异常
+        ${className}Mapper.batchUpdateDelFlagByIdAndVersion(${className}List.size(),delFlag,${className}List);
+    }
+}

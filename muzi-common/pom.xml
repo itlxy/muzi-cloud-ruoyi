@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.muzi</groupId>
+        <artifactId>muzi</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <modules>
+        <module>muzi-common-log</module>
+        <module>muzi-common-core</module>
+        <module>muzi-common-redis</module>
+        <module>muzi-common-swagger</module>
+        <module>muzi-common-security</module>
+        <module>muzi-common-datascope</module>
+        <module>muzi-common-rocketmq</module>
+        <module>muzi-common-mongodb</module>
+        <module>muzi-common-sentinel</module>
+        <module>muzi-common-elasticsearch</module>
+        <module>muzi-common-nacos</module>
+        <module>muzi-common-appollo</module>
+
+    </modules>
+
+    <artifactId>muzi-common</artifactId>
+    <packaging>pom</packaging>
+
+    <description>
+	    muzi-common通用模块
+    </description>
+
+</project>

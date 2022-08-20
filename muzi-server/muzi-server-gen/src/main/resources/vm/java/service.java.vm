@@ -1,0 +1,94 @@
+package ${packageName}.service;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.IService;
+import ${packageName}.entity.${ClassName}Entity;
+import ${packageName}.enums.DelFlag;
+import ${packageName}.excel.${ClassName}Excel;
+import ${packageName}.form.${ClassName}Form;
+import ${packageName}.query.${ClassName}Query;
+import ${packageName}.vo.${ClassName}VO;
+import javafx.util.Pair;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
+
+
+/**
+ * ${functionName}Service接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface ${ClassName}Service extends IService<${ClassName}Entity>
+{
+
+    /**
+     * 根据查询条件返回查询的分页数据表
+     *
+     * @param ${className}Query 查询条件
+     * @return 查询结果
+     **/
+    List<${ClassName}VO> getDataTable(${ClassName}Query ${className}Query);
+
+    /**
+     * 根据查询条件查询数据
+     *
+     * @param ${className}Query 查询条件
+     * @return 查询结果
+     **/
+    List<${ClassName}VO> findByQuery(${ClassName}Query ${className}Query);
+
+    /**
+     * 根据主键查询详情
+     *
+     * @param ${pkColumn.javaField} 主键
+     * @return 查询结果
+     **/
+    ${ClassName}VO getInfoById(${pkColumn.javaType} ${pkColumn.javaField});
+
+    /**
+     * 添加
+     *
+     * @param ${className}Form 表单数据
+     * @return 添加成功与否
+     **/
+    boolean add(${ClassName}Form ${className}Form);
+
+    /**
+     * 修改
+     *
+     * @param ${className}Form 表单数据
+     * @return 修改成功与否
+     **/
+    boolean edit(${ClassName}Form ${className}Form);
+
+    /**
+     * 导入
+     *
+     * @param importExcel excel导入数据
+     * @param updateSupport 是否覆盖更新
+     * @param username 用户名
+     * @return 导入成功与否
+     **/
+    Pair<String,List<${ClassName}Excel>> importData(List<${ClassName}Excel> importExcel, boolean updateSupport, String username);
+
+    /**
+     * 删除标志更新
+     *
+     * @param idList 主键列表
+     * @param delFlag 删除标志
+     * @return 更新成功与否
+     **/
+    boolean brandChangeStatus(List<Long> idList, DelFlag delFlag);
+
+    /**
+     * 根据查询构造条件批量更新
+     *
+     * @param entityList excel导入数据
+     * @param queryWrapperFunction 查询构造条件
+     **/
+    boolean updateBatchByQueryWrapper(Collection<${ClassName}Entity> entityList, Function<${ClassName}Entity, QueryWrapper> queryWrapperFunction);
+
+
+}

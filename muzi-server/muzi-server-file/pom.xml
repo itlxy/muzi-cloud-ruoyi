@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.muzi</groupId>
+        <artifactId>muzi-server</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>muzi-server-file</artifactId>
+
+    <description>
+        muzi-server-file文件服务
+    </description>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-nacos</artifactId>
+        </dependency>
+
+        <!-- MuZi Common Sentinel-->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-sentinel</artifactId>
+        </dependency>
+        
+        <!-- SpringBoot Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+		
+        <!-- FastDFS -->
+        <dependency>
+            <groupId>com.github.tobato</groupId>
+            <artifactId>fastdfs-client</artifactId>
+        </dependency>
+        
+        <!-- Minio -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
+        </dependency>
+        
+        <!-- MuZi Api System -->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-api-system</artifactId>
+        </dependency>
+        
+        <!-- MuZi Common Swagger -->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-swagger</artifactId>
+        </dependency>
+        
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+   
+</project>

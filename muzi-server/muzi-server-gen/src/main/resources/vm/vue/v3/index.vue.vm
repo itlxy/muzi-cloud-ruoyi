@@ -1,0 +1,679 @@
+<template>
+    <div class="app-container">
+        <!-- 数据列表
+        文件上传功能：fileUpload
+        新增修改表单功能：{
+          表单属性：saveOrUpdateForm
+          保存或更新事件：excuteSaveOrUpdate
+          取消事件：cancel
+        }
+        数据表功能：{
+          showRightToolbar: 是否展示右上部工具按钮
+          topBtn：按钮列表
+          onBtnClick：按钮点击事件
+          columns：展示列
+          handleSelectionChange：行选择事件
+          rowBtn：行内展示按钮属性
+        }
+        搜索条件功能：{
+          searchForm：搜索栏属性
+          getList：数据查询事件
+          handleQuery：数据查询事件
+          showSearch：是否展示搜索栏
+        }
+        -->
+        <dataTable
+            :searchForm="searchForm"
+            :tableData="tableData"
+            :fileUpload="fileUpload"
+            :saveOrUpdateForm="saveOrUpdateForm"
+            @excuteSaveOrUpdate="excuteSaveOrUpdate"
+            @cancel="cancel"
+            @getList="getList"
+            @handleQuery="handleQuery"
+            @handleSelectionChange="handleSelectionChange"
+            @onBtnClick="onBtnClick"
+        >
+        </dataTable>
+    </div>
+</template>
+
+<script setup name="${BusinessName}">
+    import { list${BusinessName}, get${BusinessName}, del${BusinessName}, add${BusinessName}, update${BusinessName}, lapse${BusinessName}, effect${BusinessName} } from "@/api/${moduleName}/${businessName}";
+    import { getToken } from '@/utils/auth'
+    import {formatDate} from '@/utils/common'
+
+    const { proxy } = getCurrentInstance();
+
+    //字典数据引入
+    #if(${dicts} != '')
+    #set($dictsNoSymbol=$dicts.replace("'", ""))
+    const { ${dictsNoSymbol} } = proxy.useDict(${dicts});
+    #end
+
+    //多选赋值的id列表
+    const ids = ref([]);
+
+    //数据表展示
+    const tableData=reactive({
+        //加载状态
+        loading: false,
+        //展示数据
+        listData: [],
+        //总条数
+        total: 0,
+        //每页数据可选条数
+        pageSizes:[10,20,50,100],
+        //顶部按钮显示个数
+        showTopBtnNum:6,
+        //是否显示右侧顶部工具栏
+        showRightToolbar: true,
+        //定义数据表顶部按钮
+        topBtn:[
+            {
+                name: '新增',
+                type: 'primary',
+                icon: 'Plus',
+                plain: true,
+                click: 'handleAdd',
+                hasPermi: ['${moduleName}:${businessName}:add'],
+                disabledSwitch: '',
+            },
+            {
+                name: '修改',
+                type: 'primary',
+                icon: 'Edit',
+                plain: true,
+                click: 'handleUpdate',
+                hasPermi: ['${moduleName}:${businessName}:edit'],
+                disabledSwitch: 'single',
+            },
+            {
+                name: '生效',
+                type: 'primary',
+                click: 'handleEffect',
+                plain: true,
+                hasPermi: ['${moduleName}:${businessName}:edit'],
+                disabledSwitch: 'multiple',
+            },
+            {
+                name: '失效',
+                type: 'primary',
+                click: 'handleLapse',
+                plain: true,
+                hasPermi: ['${moduleName}:${businessName}:edit'],
+                disabledSwitch: 'multiple',
+            },
+            {
+                name: '导入',
+                type: 'primary',
+                icon: 'Upload',
+                plain: true,
+                click: 'handleImport',
+                hasPermi: ['${moduleName}:${businessName}:import'],
+                disabledSwitch: '',
+            },
+            {
+                name: '导出',
+                type: 'primary',
+                icon: 'Download',
+                plain: true,
+                click: 'handleExport',
+                hasPermi: ['${moduleName}:${businessName}:export'],
+                disabledSwitch: '',
+            },
+        ],
+        //定义表格展示列,key必须要，用来控制显示隐藏列
+        columns:[
+            // { // 单选时才有点参数
+            //   label: '',
+            //   prop: 'radio',
+            //   width: 40,
+            // },
+            {
+                key:0,
+                label: '序号',
+                prop: 'index',
+                visible: true,
+            },
+#foreach($column in $columns)
+    #if($column.list)
+        #set($dictType=$column.dictType)
+        #set($parentheseIndex=$column.columnComment.indexOf("（"))
+        #if($parentheseIndex != -1)
+            #set($comment=$column.columnComment.substring(0, $parentheseIndex))
+        #else
+            #set($comment=$column.columnComment)
+        #end
+        #if("" != $dictType)
+            {
+                key: $foreach.count,
+                label: `$comment`,
+                prop:'${column.javaField}',
+                dictTag: { options: ${dictType}, string: true },
+                visible: true
+            },
+        #else
+            {
+                key: $foreach.count,
+                label: `$comment`,
+                prop:'${column.javaField}',
+                visible: true
+            },
+        #end
+    #end
+#end
+        ],
+        //定义行内展示按钮
+        rowBtn:[
+            {
+                name: '修改',
+                type: 'text',
+                icon: 'Edit',
+                hasPermi: ['${moduleName}:${businessName}:edit'],
+                click: 'handleUpdate',
+            },
+        //  {
+        //    name: '删除',
+        //    type: 'text',
+        //    icon: 'Delete',
+        //    hasPermi: ['${moduleName}:${businessName}:remove'],
+        //    click: 'handleDelete',
+        //  },
+        ]
+
+    })
+
+    //文件上传相关配置
+    const fileUpload=reactive({
+        //是否弹出模态框
+        open:false,
+        //是否禁用上传
+        isUploading:false,
+        // 设置上传的请求头部
+        headers: { Authorization: 'Bearer ' + getToken() },
+        // 弹出层标题（导入）
+        title: '${functionName}导入',
+        // 是否更新已经存在的数据
+        updateSupport: 0,
+        // 上传的地址
+        url: ref(import.meta.env.VITE_APP_BASE_API + '/${moduleName}/${businessName}/importData'),
+        //文件类型
+        fileType: '.xlsx, .xls',
+        //文件大小(MB)
+        fileSize: 5,
+        //文件限制个数
+        limit: 1,
+        //导入模板路径
+        templateUrl:'/${moduleName}/${businessName}/importTemplate',
+        //导入模板名称
+        templateName:'${functionName}导入模板',
+    })
+
+    //定义数据查询条件
+    const searchForm = reactive({
+        //每行显示几列
+        colNum:4,
+        //是否显示搜索列
+        showSearch: true,
+        //向后台传递的参数列表
+        queryParams: {
+            pageNum: 1,
+            pageSize: 10,
+    #foreach ($column in $columns)
+        #if($column.query)
+            #if($column.queryType == "BETWEEN")
+            ${column.javaField}Range: null,
+            #elseif($column.queryType == "IN")
+            ${column.javaField}List: null,
+            #end
+            $column.javaField: null#if($foreach.count != $columns.size()),#end
+        #end
+    #end
+        },
+        //查询条件，查询值赋值给上边参数列表中和prop相同的字段
+        showQueryFields: [
+    #foreach ($column in $columns)
+        #if($column.query)
+            #set($dictType=$column.dictType)
+##            #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+            #set($parentheseIndex=$column.columnComment.indexOf("（"))
+            #if($parentheseIndex != -1)
+                #set($comment=$column.columnComment.substring(0, $parentheseIndex))
+            #else
+                #set($comment=$column.columnComment)
+            #end
+            {
+                label: '${comment}',
+                width: '100%',
+                placeholder: '请输入${comment}',
+            #if($column.htmlType == "input")
+                type: 'Input',
+                prop: '${column.javaField}',
+            #elseif($column.htmlType == "numInput")
+                type: 'numberInput',
+                prop: '${column.javaField}',
+            #elseif($column.htmlType == "select")
+                type: 'Select',
+                prop: '${column.javaField}',
+                filterable: true,
+                options: ${dictType},
+                props: { label: 'label', value: 'value' },
+                change: row => '',
+            #elseif($column.htmlType == "pageSelectMore")
+                type: 'pageSelectMore',
+                prop: '${column.javaField}',
+                filterable: true,
+                data: {
+                    type: 'radio',
+                    url: '${moduleName}/${businessName}/list',
+                    pageSize: 10,
+                    tableColumns: [{ label: '${comment}', prop: '${column.javaField}', query:'${column.javaField}' }],
+                    label: '${column.javaField}',
+                    value: '${column.javaField}',
+                    placeholder: '请进行分页筛选'
+                },
+            #elseif($column.htmlType == "datetime")
+                #if($column.queryType == "BETWEEN")
+                type: 'DateTimeRange',
+                prop: '${column.javaField}Range',
+                colNum:2,
+                pickerType: 'datetimerange',
+                rangeSeparator: '至',
+                startPlaceholder: '开始日期',
+                endPlaceholder: '结束日期',
+                #else
+                type: 'Datetime',
+                prop: '${column.javaField}',
+                #end
+                valueFormat: 'YYYY-MM-DD HH:mm:ss',
+            #elseif($column.htmlType == "date")
+                #if($column.queryType == "BETWEEN")
+                type: 'DateRange',
+                prop: '${column.javaField}Range',
+                pickerType: 'daterange',
+                rangeSeparator: '至',
+                startPlaceholder: '开始日期',
+                endPlaceholder: '结束日期',
+                #else
+                type: 'Date',
+                prop: '${column.javaField}',
+                #end
+                valueFormat: 'YYYY-MM-DD',
+            #elseif($column.htmlType == "time")
+                #if($column.queryType == "BETWEEN")
+                type: 'TimeRange',
+                prop: '${column.javaField}Range',
+                pickerType: 'timerange',
+                rangeSeparator: '至',
+                startPlaceholder: '开始时间',
+                endPlaceholder: '结束时间',
+                #else
+                type: 'Time',
+                prop: '${column.javaField}',
+                #end
+                valueFormat: 'HH:mm:ss',
+            #end
+            },
+        #end
+    #end
+        ],
+        //查询框对应的校验规则,只校验提示，未阻止执行
+        /** rules: {
+            #foreach ($column in $columns)
+                #if($column.required)
+                    #set($parentheseIndex=$column.columnComment.indexOf("（"))
+                    #if($parentheseIndex != -1)
+                        #set($comment=$column.columnComment.substring(0, $parentheseIndex))
+                    #else
+                        #set($comment=$column.columnComment)
+                    #end
+            $column.javaField: [
+                {
+                    required: true,
+                    message: "$comment不能为空", trigger: #if($column.htmlType == "select")"change"
+                    #else"blur"#end
+                },
+            #if($column.javaType == 'String' && $column.columnType.indexOf("(")>0)
+                #set($preIndex=$column.columnType.indexOf("(")+1)
+                #set($aftIndex=$column.columnType.indexOf(")"))
+                #set($fieldLength=$column.columnType.substring($preIndex, $aftIndex))
+                {
+                    max: $fieldLength ,
+                    message: "$comment 的最大长度不能超过 $fieldLength 个字符", trigger: "blur"
+                }
+            #end
+            ]#if($foreach.count != $columns.size()),#end
+                #end
+            #end
+        } **/
+    });
+
+    //定义保存修改表单数据
+    const saveOrUpdateForm = reactive({
+        title:"表单数据",
+        //表单是否打开
+        open:false,
+        //表单显示几列
+        colNum:2,
+        //向后台传递的表单数据列表
+        formValues: {
+    #foreach ($column in $columns)
+        #if($column.htmlType == "radio")
+            $column.javaField: #if($column.javaType == "Integer" || $column.javaType == "Long")0
+                #else"0"#end#if($foreach.count != $columns.size()),#end
+        #elseif($column.htmlType == "checkbox")
+            $column.javaField: []#if($foreach.count != $columns.size()),#end
+        #else
+            $column.javaField: null#if($foreach.count != $columns.size()),#end
+        #end
+    #end
+        },
+        //表单选项条件，填写值赋值给上边参数列表中和prop相同的字段
+        formFields: [
+#foreach($column in $columns)
+    #set($field=$column.javaField)
+    #if($column.insert && !$column.pk)
+        #if(($column.usableColumn) || (!$column.superColumn))
+            #set($parentheseIndex=$column.columnComment.indexOf("（"))
+            #if($parentheseIndex != -1)
+                #set($comment=$column.columnComment.substring(0, $parentheseIndex))
+            #else
+                #set($comment=$column.columnComment)
+            #end
+            #set($dictType=$column.dictType)
+            #if($column.htmlType == "input")
+                {
+                    type: 'Input',
+                    label: '${comment}',
+                    prop: '${column.javaField}',
+                    width: '100%',
+                    placeholder: '请输入${comment}'
+                },
+            #elseif($column.htmlType == "textarea")
+                {
+                    type: 'Textarea',
+                    label: '${comment}',
+                    rows: 3,
+                    colNum:2,
+                    prop: '${column.javaField}',
+                    width: '530px',
+                    placeholder: '请输入${comment}'
+                },
+            #elseif(($column.htmlType == "select" || $column.htmlType == "radio") && "" != $dictType)
+                {
+                    type: 'Select',
+                    label: '${comment}',
+                    prop: '${column.javaField}',
+                    filterable: true,
+                    width: '100%',
+                    options: ${dictType},
+                    props: { label: 'label', value: 'value' },
+                    change: row => '',
+                    placeholder: '请选择${comment}'
+                },
+            #elseif($column.htmlType == "pageSelectMore")
+                {
+                    type: 'pageSelectMore',
+                    label: '${comment}',
+                    filterable: true,
+                    prop: '${column.javaField}',
+                    width: '100%',
+                    placeholder: '请选择${comment}',
+                    data: {
+                        type: 'radio',
+                        url: '${moduleName}/${businessName}/list',
+                        pageSize: 10,
+                        tableColumns: [{ label: '${comment}', prop: '${column.javaField}', query:'${column.javaField}' }],
+                        label: '${column.javaField}',
+                        value: '${column.javaField}',
+                        placeholder: '请进行分页筛选'
+                    },
+                },
+            #elseif($column.htmlType == "datetime")
+                {
+                    type: 'DateTime',
+                    label: '${comment}',
+                    prop: '${column.javaField}',
+                    width: '100%',
+                    valueFormat: 'YYYY-MM-DD HH:mm:ss',
+                    placeholder: '请选择${comment}'
+                },
+            #elseif($column.htmlType == "date")
+                {
+                    type: 'Date',
+                    label: '${comment}',
+                    prop: '${column.javaField}',
+                    width: '100%',
+                    valueFormat: 'YYYY-MM-DD',
+                    placeholder: '请选择${comment}'
+                },
+            #elseif($column.htmlType == "time")
+                {
+                    type: 'Time',
+                    label: '${comment}',
+                    prop: '${column.javaField}',
+                    width: '100%',
+                    valueFormat: 'HH:mm:ss',
+                    placeholder: '请选择${comment}'
+                },
+            #end
+        #end
+    #end
+#end
+        ],
+        //表单对应的校验规则
+        rules: {
+    #foreach ($column in $columns)
+
+            #set($parentheseIndex=$column.columnComment.indexOf("（"))
+            #if($parentheseIndex != -1)
+                #set($comment=$column.columnComment.substring(0, $parentheseIndex))
+            #else
+                #set($comment=$column.columnComment)
+            #end
+            $column.javaField: [
+                #if($column.required)
+                {
+                    required: true,
+                    message: "$comment 不能为空", trigger: #if($column.htmlType == "select")"change"
+                    #else"blur"#end
+                },
+                #end
+                #if($column.javaType == 'String' && $column.columnType.indexOf("(")>0)
+                    #set($preIndex=$column.columnType.indexOf("(")+1)
+                    #set($aftIndex=$column.columnType.indexOf(")"))
+                    #set($fieldLength=$column.columnType.substring($preIndex, $aftIndex))
+                {
+                    max: $fieldLength ,
+                    message: "$comment 的最大长度不能超过 $fieldLength 个字符", trigger: "blur"
+                },
+                #elseif($column.javaType == 'BigDecimal')
+                    #set($preIndex=$column.columnType.indexOf("(")+1)
+                    #set($aftIndex=$column.columnType.indexOf(")"))
+                    #set($midIndex=$column.columnType.indexOf(","))
+                    #set($midAftIndex=$column.columnType.indexOf(",")+1)
+                    #set($preFieldLength=$column.columnType.substring($preIndex, $midIndex))
+                    #set($aftFieldLength=$column.columnType.substring($midAftIndex, $aftIndex))
+                {
+                    pattern: /(^$|^-?[0-9]{1,$preFieldLength}(\.[0-9]{1,$aftFieldLength})?$)/ ,
+                    message: "$comment 的整数位数不能超过 $preFieldLength 位，小数位数不能超过 $aftFieldLength 位", trigger: "blur"
+                },
+                #elseif($column.javaType == 'Integer'||$column.javaType == 'Long')
+                {
+                    pattern: /(^$|^-?[0-9]{1,}$)/ ,
+                    message: "$comment 必须是数字", trigger: "blur"
+                },
+                #end
+            ]#if($foreach.count != $columns.size()),#end
+
+    #end
+        }
+    });
+
+
+    // 取消按钮
+    function cancel() {
+        reset()
+        saveOrUpdateForm.open = false;
+
+    }
+
+    /** 数据查询操作 */
+    function getList(queryParam) {
+        tableData.loading = true
+        list${BusinessName}(queryParam).then((response) => {
+            tableData.listData = response.rows
+            tableData.total = response.total
+            tableData.loading = false
+        })
+    }
+
+
+    /** 搜索按钮操作 */
+    function handleQuery() {
+        //searchForm.queryParams.pageNum = 1;
+
+        getList(searchForm.queryParams);
+    }
+
+
+    // 多选框选中数据
+    function handleSelectionChange(selection) {
+        ids.value = selection.map(item => item.id);
+    }
+
+    //表单重置
+    function reset(){
+        saveOrUpdateForm.formValues={
+    #foreach ($column in $columns)
+        #if($column.htmlType == "radio")
+            $column.javaField: #if($column.javaType == "Integer" || $column.javaType == "Long")0
+            #else"0"#end#if($foreach.count != $columns.size()),#end
+        #elseif($column.htmlType == "checkbox")
+            $column.javaField: []#if($foreach.count != $columns.size()),#end
+        #else
+            $column.javaField: null#if($foreach.count != $columns.size()),#end
+        #end
+    #end
+        }
+
+    }
+
+    /** 新增按钮操作 */
+    function handleAdd() {
+        reset();
+        saveOrUpdateForm.open = true;
+        saveOrUpdateForm.title = "添加${functionName}";
+    }
+
+    /** 修改按钮操作 */
+    function handleUpdate(row) {
+        reset();
+        const id = row.id || ids.value
+        get${BusinessName}(id).then(response => {
+            saveOrUpdateForm.open = true;
+            saveOrUpdateForm.title = "修改${functionName}";
+            saveOrUpdateForm.formValues=response.data;
+            //字典数据默认都是字符串，使用字典数据显示的需要把返回值转为字符串
+            saveOrUpdateForm.formValues.delFlag=saveOrUpdateForm.formValues.delFlag+''
+        });
+    }
+
+    /** 表单提交按钮操作 */
+    function excuteSaveOrUpdate(form){
+        if (form.id != null) {
+            update${BusinessName}(form).then(response => {
+                proxy.#[[$modal]]#.msgSuccess("修改成功");
+                saveOrUpdateForm.open = false;
+                getList(searchForm.queryParams);
+            });
+        } else {
+            add${BusinessName}(form).then(response => {
+                proxy.#[[$modal]]#.msgSuccess("新增成功");
+                saveOrUpdateForm.open = false;
+                getList(searchForm.queryParams);
+            });
+        }
+
+    }
+
+    /** 删除按钮操作 */
+    function handleDelete() {
+        const idList = ids.value;
+        proxy.#[[$modal]]#.confirm('是否确认删除${functionName}编号为"' + idList + '"的数据项？').then(function() {
+        return del${BusinessName}(idList);
+        }).then(() => {
+        getList(searchForm.queryParams);
+        proxy.#[[$modal]]#.msgSuccess("删除成功");
+        }).catch(() => {});
+    }
+
+    /** 生效按钮操作 */
+    function handleEffect() {
+        const idList = ids.value;
+        proxy.#[[$modal]]#.confirm('是否确认修改${functionName}编号为"' + idList + '"的数据项的状态为有效？').then(function () {
+        return effect${BusinessName}(idList);
+        }).then(() => {
+        getList(searchForm.queryParams);
+        proxy.#[[$modal]]#.msgSuccess("生效成功");
+        }).catch(() => { });
+    }
+
+    /** 失效按钮操作 */
+    function handleLapse() {
+        const idList = ids.value;
+        proxy.#[[$modal]]#.confirm('是否确认修改品牌编号为"' + idList + '"的数据项的状态为无效？').then(function () {
+        return lapse${BusinessName}(idList);
+        }).then(() => {
+        getList(searchForm.queryParams);
+        proxy.#[[$modal]]#.msgSuccess("失效成功");
+        }).catch(() => { });
+    }
+
+    /** 导入按钮操作 */
+    function handleImport() {
+        fileUpload.open = true
+        fileUpload.isUploading = false
+    }
+
+    /** 导出按钮操作 */
+    function handleExport() {
+        proxy.download('${moduleName}/${businessName}/export', {
+            ...searchForm.queryParams,
+            idList: ids.value,
+        }, `${functionName}数据_#[[$]]#{formatDate(new Date(),'yyyy年MM月dd日hh时mm分ss秒')}.xlsx`)
+    }
+
+    /** 定义按钮点击触发事件 */
+    function onBtnClick(row, item) {
+        switch (item.click) {
+            case 'handleUpdate':
+                handleUpdate(row)
+                break
+            case 'handleDelete':
+                handleDelete(row)
+                break
+            case 'handleAdd':
+                handleAdd()
+                break
+            case 'handleLapse':
+                handleLapse()
+                break
+            case 'handleEffect':
+                handleEffect()
+                break
+            case 'handleExport':
+                handleExport()
+                break
+            case 'handleImport':
+                handleImport()
+                break
+            default:
+                break
+        }
+    }
+
+    /** 页面加载后的初始查询 */
+    getList(searchForm.queryParams);
+</script>

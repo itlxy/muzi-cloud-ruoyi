@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>com.muzi</groupId>
+        <artifactId>muzi</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    
+    <artifactId>muzi-auth</artifactId>
+	
+    <description>
+        muzi-auth认证授权中心
+    </description>
+    
+    <dependencies>
+
+        <!-- Muzi Nacos -->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-nacos</artifactId>
+        </dependency>
+
+        <!-- MuZi Common Sentinel-->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-sentinel</artifactId>
+        </dependency>
+		
+        <!-- SpringBoot Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <!-- SpringBoot Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+		
+        <!-- MuZi Common Security-->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-security</artifactId>
+        </dependency>
+        
+    </dependencies>
+	
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+   
+</project>

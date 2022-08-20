@@ -1,0 +1,6 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.muzi.common.security.config.WebMvcConfig,\
+  com.muzi.common.security.service.TokenService,\
+  com.muzi.common.security.aspect.PreAuthorizeAspect,\
+  com.muzi.common.security.aspect.InnerAuthAspect,\
+  com.muzi.common.security.handler.GlobalExceptionHandler

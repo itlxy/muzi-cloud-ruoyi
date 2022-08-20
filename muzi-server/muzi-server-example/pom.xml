@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>muzi-server</artifactId>
+        <groupId>com.muzi</groupId>
+        <version>${revision}</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>muzi-server-example</artifactId>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-log</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- MuZi Common Sentinel-->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-sentinel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-datascope</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Muzi Nacos -->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-nacos</artifactId>
+        </dependency>
+
+        <!-- SpringCloud Alibaba Sentinel -->
+
+
+        <!-- SpringBoot Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Swagger UI -->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${swagger.fox.version}</version>
+        </dependency>
+
+        <!-- Mysql Connector -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <!-- MuZi Common Swagger -->
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-swagger</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.muzi</groupId>
+            <artifactId>muzi-common-elasticsearch</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                    <include>**/*.yml</include>
+                </includes>
+
+                <filtering>true</filtering>
+            </resource>
+
+            <resource>
+                <!--   描述存放资源的目录，该路径相对POM路径-->
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+    </build>
+
+
+</project>

@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.muzi.api.system.factory.RemoteUserFallbackFactory,\
+  com.muzi.api.system.factory.RemoteLogFallbackFactory, \
+  com.muzi.api.system.factory.RemoteFileFallbackFactory

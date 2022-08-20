@@ -1,0 +1,164 @@
+package ${packageName}.service.impl;
+
+import java.util.*;
+import java.util.function.Function;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.enums.SqlMethod;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import ${basePackage}.common.core.exception.ServiceException;
+import ${basePackage}.common.core.utils.CommonUtils;
+import ${basePackage}.common.security.utils.SecurityUtils;
+import ${basePackage}.common.core.utils.StringUtils;
+import ${basePackage}.common.core.utils.QueryWrapperUtils;
+import ${basePackage}.common.core.utils.bean.ValidateUtil;
+import ${basePackage}.common.core.constant.DataValidateGroup;
+import ${packageName}.convert.po2pojo.${ClassName}POJOConvert;
+import ${packageName}.transaction.DemoPersonTransactionService;
+import ${packageName}.entity.${ClassName}Entity;
+import ${packageName}.enums.DelFlag;
+import javafx.util.Pair;
+import com.github.pagehelper.PageInfo;
+import ${packageName}.excel.${ClassName}Excel;
+import ${packageName}.form.${ClassName}Form;
+import ${packageName}.query.${ClassName}Query;
+import ${packageName}.service.${ClassName}Service;
+import ${packageName}.vo.${ClassName}VO;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.binding.MapperMethod;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ${packageName}.mapper.${ClassName}Mapper;
+
+import javax.annotation.Resource;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+
+
+/**
+ * ${functionName}Service业务层处理
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Service
+public class ${ClassName}ServiceImpl extends ServiceImpl<${ClassName}Mapper, ${ClassName}Entity> implements ${ClassName}Service
+{
+    @Resource
+    private ${ClassName}Mapper ${className}Mapper;
+    @Resource
+    private ${ClassName}TransactionService ${className}TransactionService;
+    @Resource
+    private Validator validator;
+    @Resource
+    private ${ClassName}POJOConvert ${className}POJOConvert;
+
+
+    @Override
+    public List<${ClassName}VO> getDataTable(${ClassName}Query ${className}Query){
+        List<${ClassName}VO> ${className}VOList=${className}Mapper.getDataTable(${className}Query);
+        return ${className}VOList;
+    }
+
+    @Override
+    public List<${ClassName}VO> findByQuery(${ClassName}Query ${className}Query) {
+        QueryWrapper queryWrapper=QueryWrapperUtils.getQueryWrapper(${ClassName}VO.class,${className}Query);
+        List<Map<String,Object>> ${className}VOMaps=${className}Mapper.selectMaps(queryWrapper);
+        try {
+            //将map对象转为实体类
+            List<${ClassName}VO> ${className}VOList= CommonUtils.mapToObj(${className}VOMaps,${ClassName}VO.class);
+            return ${className}VOList;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public ${ClassName}VO getInfoById(${pkColumn.javaType} ${pkColumn.javaField}){
+        return ${className}Mapper.getInfoById(${pkColumn.javaField});
+    }
+
+    @Override
+    public boolean add(${ClassName}Form ${className}Form) {
+        ${ClassName}Entity ${className}Entity=${className}POJOConvert.to${ClassName}Entity(${className}Form);
+        return this.save(${className}Entity);
+    }
+
+    @Override
+    public boolean edit(${ClassName}Form ${className}Form) {
+        ${ClassName}Entity ${className}Entity=${className}POJOConvert.to${ClassName}Entity(${className}Form);
+        return this.updateById(${className}Entity);
+    }
+
+    @Override
+    public Pair<String,List<${ClassName}Excel>> importData(List<${ClassName}Excel> importExcel, boolean updateSupport, String username) {
+        if (StringUtils.isNull(importExcel) || importExcel.size() == 0) {
+            throw new ServiceException("导入数据不能为空！");
+        }
+        StringBuilder errorSb = new StringBuilder();
+        List<${ClassName}Excel> failList = new ArrayList<>();
+        List<${ClassName}Entity> successList = new ArrayList<>();
+        for (int i = 0; i < importExcel.size(); i++) {
+            ${ClassName}Excel excel = importExcel.get(i);
+            Set<ConstraintViolation<${ClassName}Excel>> errors = validator.validate(excel, DataValidateGroup.ExcelSave.class);
+            if (errors == null || errors.isEmpty()) {
+                //如果自动校验通过，判断手动校验是否出错
+                /*if(true) {
+                    successList.add(excel);
+                }else {
+                    errorSb.append("第").append(i+1).append("条:")
+                            .append("数据有问题,请仔细检查;");
+                }*/
+                successList.add(excel);
+            } else {
+                errorSb.append("第").append(i + 1).append("条:");
+                String error=ValidateUtil.getValidationMsg(errors);
+                errorSb.append(error);
+                excel.setErrorRemark(error);
+                failList.add(excel);
+            }
+
+        }
+        if(successList.size()>0){
+            if(updateSupport){
+                ${className}Mapper.batchInsertUpdateUnique(successList);
+            }else{
+                ${className}Mapper.batchInsertIgnoreUnique(successList);
+            }
+        }
+        return new Pair(errorSb.toString(),failList);
+    }
+
+    @Override
+    public boolean brandChangeStatus(List<Long> idList, DelFlag delFlag) {
+        //如果参数校验失败，则返回失败
+        if(CollectionUtils.isEmpty(idList)||null==delFlag){
+            throw new ServiceException("状态更改失败,数据列表或状态标志为空");
+        }
+        LambdaQueryWrapper<${ClassName}Entity> queryWrapper=new LambdaQueryWrapper<>();
+        queryWrapper.select(${ClassName}Entity::getId,${ClassName}Entity::getRecordVersion,${ClassName}Entity::getDelFlag);
+        queryWrapper.in(${ClassName}Entity::getId,idList);
+        List<${ClassName}Entity> ${className}List=${className}Mapper.selectList(queryWrapper);
+        if(CollectionUtils.isEmpty(${className}List)){
+            throw new ServiceException("状态更改失败,查询数据条数为0");
+        }
+        //事务方法更新
+        ${className}TransactionService.batchUpdateDelFlagByIdAndVersion(delFlag.getCode(),${className}List);
+        return true;
+    }
+
+    //返回的true或false仅代表该sql语句是否成功执行，并不代表结果已成功更新
+    @Override
+    public boolean updateBatchByQueryWrapper(Collection<${ClassName}Entity> entityList, Function<${ClassName}Entity, QueryWrapper> queryWrapperFunction) {
+        String sqlStatement = this.getSqlStatement(SqlMethod.UPDATE);
+        return this.executeBatch(entityList, DEFAULT_BATCH_SIZE, (sqlSession, entity) -> {
+            MapperMethod.ParamMap param = new MapperMethod.ParamMap();
+            param.put(Constants.ENTITY, entity);
+            param.put(Constants.WRAPPER, queryWrapperFunction.apply(entity));
+            sqlSession.update(sqlStatement, param);
+        });
+    }
+}

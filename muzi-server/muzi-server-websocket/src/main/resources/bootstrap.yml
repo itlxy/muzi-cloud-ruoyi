@@ -1,0 +1,15 @@
+websocket:
+  port: 7000 #端口
+  url: /msg	#访问url
+# Tomcat
+server:
+  port: 9209
+
+# Spring
+spring:
+  application:
+    # 应用名称
+    name: muzi-websocket
+  profiles:
+    # 环境配置
+    active: dev

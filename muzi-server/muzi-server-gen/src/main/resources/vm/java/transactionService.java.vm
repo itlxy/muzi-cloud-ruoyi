@@ -1,0 +1,31 @@
+package ${packageName}.transaction;
+
+import ${packageName}.entity.${ClassName}Entity;
+
+import java.util.List;
+/**
+ * ${functionName}Service接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface ${ClassName}TransactionService {
+
+    /**
+     * 事务多条更新${functionName}
+     *
+     * @author ${author}
+     * @date ${datetime}
+     * @param ${className}List
+     **/
+    void moreUpdateByIdAndVersion(List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 事务批量更新${functionName}
+     *
+     * @author ${author}
+     * @date ${datetime}
+     * @param ${className}List
+     **/
+    void batchUpdateDelFlagByIdAndVersion(boolean delFlag,List<${ClassName}Entity> ${className}List);
+}

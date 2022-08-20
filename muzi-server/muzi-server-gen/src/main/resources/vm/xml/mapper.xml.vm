@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="${packageName}.mapper.${ClassName}Mapper">
+    
+    <resultMap type="${packageName}.entity.${ClassName}Entity" id="${ClassName}Result">
+#foreach ($column in $columns)
+        <result property="${column.javaField}"    column="${column.columnName}"    />
+#end
+    </resultMap>
+
+    <sql id="${ClassName}VOCols">
+    #foreach($column in $columns)
+        `$column.columnName`#if($foreach.count != $columns.size()),#end
+    #end
+    </sql>
+
+    <sql id="insertBodySql">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            #foreach($column in $columns)
+                #if($column.columnName != $pkColumn.columnName || !$pkColumn.increment)
+                    `$column.columnName`,
+                #end
+            #end
+        </trim>
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                #foreach($column in $columns)
+                    #if($column.columnName != $pkColumn.columnName || !$pkColumn.increment)
+                        #{item.${column.javaField}},
+                    #end
+                #end
+            </trim>
+        </foreach>
+    </sql>
+
+    <select id="getDataTable" resultType="${packageName}.vo.${ClassName}VO">
+        select
+        #foreach ($column in $columns)
+            ${businessName}.${column.columnName} as ${column.javaField}#if($foreach.count != $columns.size()),#end
+        #end
+        from ${tableName} as ${businessName}
+        <where>
+            #foreach($column in $columns)
+                #set($queryType=$column.queryType)
+                #set($javaField=$column.javaField)
+                #set($javaType=$column.javaType)
+                #set($columnName=$column.columnName)
+                #set($AttrName=$column.javaField.substring(0,1).toUpperCase() + ${column.javaField.substring(1)})
+                #if($column.queryType == "EQ")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName = #{$javaField}
+        </if>
+                #elseif($queryType == "NE")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName != #{$javaField}
+        </if>
+                #elseif($queryType == "GT")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName &gt; #{$javaField}
+        </if>
+                #elseif($queryType == "GTE")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName &gt;= #{$javaField}
+        </if>
+                #elseif($queryType == "LT")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName &lt; #{$javaField}
+        </if>
+                #elseif($queryType == "LTE")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName &lt;= #{$javaField}
+        </if>
+                #elseif($queryType == "LIKE")
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName like concat('%', #{$javaField}, '%')
+        </if>
+                #elseif($queryType == "IN")
+        <if test="${column.javaField}List != null and ${column.javaField}List.size() > 0">
+            and ${businessName}.$columnName in
+            <foreach collection="${column.javaField}List" open="(" separator="," close=")" item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName = #{$javaField}
+        </if>
+                #elseif($queryType == "BETWEEN")
+        <if test="${column.javaField}Range != null and ${column.javaField}Range.size() >= 2">
+            and ${businessName}.$columnName between
+            #{${column.javaField}Range[0]} and #{${column.javaField}Range[1]}
+        </if>
+        <if test="$javaField != null #if($javaType == 'String' ) and $javaField.trim() != ''#end">
+            and ${businessName}.$columnName = #{$javaField}
+        </if>
+                #end
+            #end
+        </where>
+    </select>
+
+    <select id="getInfoById" resultType="${packageName}.vo.${ClassName}VO">
+        select
+            #foreach ($column in $columns)
+        ${businessName}.${column.columnName} as ${column.javaField}#if($foreach.count != $columns.size()),#end
+            #end
+        from ${tableName} as ${businessName}
+        where ${businessName}.${pkColumn.columnName} = #{${pkColumn.javaField}}
+    </select>
+
+    <insert id="batchInsert" parameterType="${packageName}.entity.${ClassName}Entity"#if($pkColumn.increment) useGeneratedKeys="true" keyProperty="$pkColumn.javaField"#end>
+        insert into ${tableName}
+        <include refid="insertBodySql"></include>
+    </insert>
+
+    <insert id="batchInsertIgnoreUnique" parameterType="${packageName}.entity.${ClassName}Entity"#if($pkColumn.increment) useGeneratedKeys="true" keyProperty="$pkColumn.javaField"#end>
+        insert ignore into ${tableName}
+        <include refid="insertBodySql"></include>
+    </insert>
+
+    <insert id="batchInsertUpdateUnique" parameterType="${packageName}.entity.${ClassName}Entity"#if($pkColumn.increment) useGeneratedKeys="true" keyProperty="$pkColumn.javaField"#end>
+        insert into ${tableName}
+        <include refid="insertBodySql"></include>
+        ON DUPLICATE KEY UPDATE
+        <trim suffixOverrides=",">
+        #foreach($column in $columns)
+            #if($column.columnName != $pkColumn.columnName || !$pkColumn.increment)
+                `$column.columnName` =values(`$column.columnName`),
+            #end
+        #end
+        </trim>
+    </insert>
+
+    <update id="updateByIdAndVersion" parameterType="${packageName}.entity.${ClassName}Entity">
+            update ${tableName}
+            <trim prefix="SET" suffixOverrides=",">
+                #foreach($column in $columns)
+                    #if($column.columnName != $pkColumn.columnName && $column.list && !$table.isSuperColumn($column.javaField))
+                        <if test="entity.${column.javaField} != null#if($column.javaType == 'String' && $column.required) and entity.${column.javaField} != ''#end">
+                            $column.columnName = #{entity.${column.javaField}},
+                        </if>
+                    #end
+                #end
+                update_time = #{entity.updateTime},
+                update_by = #{entity.updateBy},
+                record_version =record_version+1
+            </trim>
+            where id =#{entity.id} and record_version=#{entity.recordVersion};
+    </update>
+
+    <update id="moreUpdateByIdAndVersion" parameterType="${packageName}.entity.${ClassName}Entity">
+        <foreach collection="list" item="item">
+            update ${tableName}
+            <trim prefix="SET" suffixOverrides=",">
+                #foreach($column in $columns)
+                    #if($column.columnName != $pkColumn.columnName && $column.list && !$table.isSuperColumn($column.javaField))
+                        <if test="item.${column.javaField} != null#if($column.javaType == 'String' && $column.required) and item.${column.javaField} != ''#end">
+                            $column.columnName = #{item.${column.javaField}},
+                        </if>
+                    #end
+                #end
+                update_time = #{item.updateTime},
+                update_by = #{item.updateBy},
+                record_version =record_version+1
+            </trim>
+            where id =#{item.id} and record_version=#{item.recordVersion};
+        </foreach>
+    </update>
+
+    <update id="batchUpdateByIdAndVersion" parameterType="${packageName}.entity.${ClassName}Entity">
+        update ${tableName}
+        <trim prefix="SET" suffixOverrides=",">
+            #foreach($column in $columns)
+                #if($column.columnName != $pkColumn.columnName && $column.list && !$table.isSuperColumn($column.javaField))
+                    <if test="entity.${column.javaField} != null#if($column.javaType == 'String' && $column.required) and entity.${column.javaField} != ''#end">
+                        $column.columnName = #{entity.${column.javaField}},
+                    </if>
+                #end
+            #end
+            update_time = #{entity.updateTime},
+            update_by = #{entity.updateBy},
+            record_version =record_version+1
+        </trim>
+        where (id,record_version) in
+        <foreach collection="list" open="(" separator="," close=")" item="item">
+            (#{item.id},#{item.recordVersion})
+        </foreach>
+    </update>
+
+    <update id="batchUpdateDelFlagByIdAndVersion" parameterType="${packageName}.entity.${ClassName}Entity">
+        update ${tableName}
+        <trim prefix="SET" suffixOverrides=",">
+            del_flag=#{delFlag},
+            record_version =record_version+1
+        </trim>
+        where (id,record_version) in
+        <foreach collection="list" open="(" separator="," close=")" item="item">
+            (#{item.id},#{item.recordVersion})
+        </foreach>
+    </update>
+
+
+#if($table.sub)
+
+    <resultMap id="${ClassName}${subClassName}Result" type="${ClassName}" extends="${ClassName}Result">
+        <collection property="${subclassName}List" notNullColumn="sub_${subTable.pkColumn.columnName}" javaType="java.util.List" resultMap="${subClassName}Result" />
+    </resultMap>
+
+    <resultMap type="${subClassName}" id="${subClassName}Result">
+    #foreach ($column in $subTable.columns)
+        <result property="${column.javaField}"    column="sub_${column.columnName}"    />
+    #end
+    </resultMap>
+#end
+</mapper>

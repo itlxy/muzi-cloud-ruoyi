@@ -1,0 +1,100 @@
+package ${packageName}.mapper;
+
+import java.util.List;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import ${basePackage}.common.datascope.annotation.ListReturnCheck;
+import ${packageName}.entity.${ClassName}Entity;
+import ${packageName}.query.${ClassName}Query;
+import ${packageName}.vo.${ClassName}VO;
+import org.apache.ibatis.annotations.Param;
+#if($table.sub)
+import ${packageName}.entity.${subClassName};
+#end
+
+/**
+ * ${functionName}Mapper接口
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface ${ClassName}Mapper extends BaseMapper<${ClassName}Entity> {
+    /**
+     * 查询${functionName}
+     *
+     * @param ${className}Query      查询参数
+     * @return 结果
+     */
+    List<${ClassName}VO> getDataTable(${ClassName}Query ${className}Query);
+
+    /**
+     * 获取${functionName}详情
+     *
+     * @param ${pkColumn.javaField} ${pkColumn.columnComment}
+     * @return 详情
+     */
+        ${ClassName}VO getInfoById(@Param("${pkColumn.javaField}") ${pkColumn.javaType} ${pkColumn.javaField});
+
+    /**
+     * 批量插入${functionName}列表
+     *
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    int batchInsert(@Param("list") List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 批量插入${functionName}列表，忽略唯一索引
+     *
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    int batchInsertIgnoreUnique(@Param("list") List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 批量插入${functionName}列表，遇到唯一索引更新
+     *
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    int batchInsertUpdateUnique(@Param("list") List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 根据id和版本号更新${functionName}
+     *
+     * @param expectCount 预计更新条数
+     * @param ${className} ${functionName}
+     * @return 行数
+     */
+    @ListReturnCheck(info = "根据id和版本号更新${functionName}失败,结果与预期不符")
+    int updateByIdAndVersion(@Param("expectCount") int expectCount, @Param("entity") ${ClassName}Entity ${className});
+
+    /**
+     * 根据id和版本号多条更新${functionName}
+     *
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    Boolean moreUpdateByIdAndVersion(@Param("list") List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 根据id和版本号批量更新${functionName}
+     *
+     * @param expectCount 预计更新条数
+     * @param ${className} 更新的实际值
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    @ListReturnCheck(info = "根据id和版本号更新${functionName}失败,结果与预期不符")
+    int batchUpdateByIdAndVersion(@Param("expectCount") int expectCount, @Param("entity")${ClassName}Entity ${className}, @Param("list") List<${ClassName}Entity> ${className}List);
+
+    /**
+     * 根据id和版本号批量更新${functionName}
+     *
+     * @param expectCount 预计更新条数
+     * @param delFlag 删除标识
+     * @param ${className}List ${functionName}列表
+     * @return 行数
+     */
+    @ListReturnCheck(info = "根据id和版本号更新${functionName}失败,结果与预期不符")
+    int batchUpdateDelFlagByIdAndVersion(@Param("expectCount") int expectCount, @Param("delFlag") boolean delFlag, @Param("list") List<${ClassName}Entity> ${className}List);
+}

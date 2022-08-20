@@ -1,0 +1,236 @@
+package ${packageName}.controller;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.groups.Default;
+import ${basePackage}.common.core.web.domain.XlsxVO;
+import ${basePackage}.common.core.utils.StringUtils;
+import ${basePackage}.common.security.annotation.RepeatSubmit;
+import ${basePackage}.common.core.utils.bean.ValidateUtil;
+import ${basePackage}.common.core.exception.ServiceException;
+import ${basePackage}.common.security.annotation.RequiresPermissions;
+import ${basePackage}.common.security.utils.SecurityUtils;
+import ${basePackage}.common.core.constant.DataValidateGroup;
+import ${packageName}.enums.DelFlag;
+import org.springframework.util.ObjectUtils;
+import ${packageName}.excel.${ClassName}Excel;
+import ${packageName}.form.${ClassName}Form;
+import ${packageName}.query.${ClassName}Query;
+import ${packageName}.vo.${ClassName}VO;
+import javafx.util.Pair;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ${basePackage}.common.log.annotation.Log;
+import ${basePackage}.common.log.enums.BusinessType;
+import ${packageName}.service.${ClassName}Service;
+import ${basePackage}.common.core.web.controller.BaseController;
+import ${basePackage}.common.core.web.domain.AjaxResult;
+import ${basePackage}.common.core.utils.poi.ExcelUtil;
+import ${basePackage}.common.core.web.page.TableDataInfo;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * ${functionName}Controller
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+@Api(tags = "${functionName}Controller")
+@RestController
+@RequestMapping("/${businessName}")
+public class ${ClassName}Controller extends BaseController
+{
+    @Resource
+    private ${ClassName}Service ${className}Service;
+
+    /**
+     * 查询${functionName}列表
+     *
+     * @param ${className}Query 查询条件实体
+     * @return 表单数据
+     */
+    @ApiOperation("获取${functionName}数据列表")
+    @RequiresPermissions("${permissionPrefix}:list")
+    @GetMapping("/list")
+    public TableDataInfo list(@Validated(DataValidateGroup.PageQuery.class) ${ClassName}Query ${className}Query, BindingResult bindingResult)
+    {
+        if (bindingResult.hasErrors()) {
+            throw new ServiceException(ValidateUtil.getValidationMsg(bindingResult));
+        }
+        startPage();
+        List<${ClassName}VO> dataTable = ${className}Service.getDataTable(${className}Query);
+        return getDataTable(dataTable);
+    }
+
+    /**
+     * 导出${functionName}列表
+     *
+     * @param ${className}Query 查询条件实体
+     * @return
+     */
+    @ApiOperation("导出${functionName}数据列表")
+    @RequiresPermissions("${permissionPrefix}:export")
+    @Log(title = "${functionName}", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, ${ClassName}Query ${className}Query)
+    {
+        List<${ClassName}VO> list = ${className}Service.findByQuery(${className}Query);
+        ExcelUtil<${ClassName}VO> util = new ExcelUtil<${ClassName}VO>(${ClassName}VO.class);
+        util.exportExcel(response, list, "${functionName}数据");
+    }
+
+    /**
+     * 获取${functionName}导入模板
+     */
+    @ApiOperation("获取${functionName}导入模板")
+    @PostMapping("/importTemplate")
+    @RequiresPermissions("${permissionPrefix}:import")
+    @Log(title = "${functionName}", businessType = BusinessType.IMPORT)
+    public void importTemplate(HttpServletResponse response) throws IOException {
+        ExcelUtil<${ClassName}Excel> util = new ExcelUtil<>(${ClassName}Excel.class);
+        util.importTemplateExcel(response, "${functionName}数据");
+    }
+
+    /**
+     * ${functionName}数据导入
+     *
+     * @param file 上传文件
+     * @param updateSupport 覆盖更新
+     * @return 返回结果
+     */
+    @ApiOperation("${functionName}数据导入")
+    @Log(title = "${functionName}数据导入", businessType = BusinessType.IMPORT)
+    @RequiresPermissions("${permissionPrefix}:import")
+    @PostMapping("/importData")
+    public AjaxResult importData(MultipartFile file, boolean updateSupport) throws Exception {
+        ExcelUtil<${ClassName}Excel> util = new ExcelUtil<>(${ClassName}Excel.class);
+        Pair<String,List<DemoPersonExcel>> pair=${className}Service.importData(util.importExcel(file.getInputStream()), updateSupport, SecurityUtils.getUsername());
+        if(StringUtils.isNotEmpty(pair.getKey())){
+            List<${ClassName}Excel> errorDataList=pair.getValue();
+            //此处可以对数据进行转化处理
+            return AjaxResult.error(pair.getKey(),new XlsxVO<${ClassName}Excel>(util.getHeadAndFieldName(),errorDataList));
+        }
+        return AjaxResult.success("数据导入成功");
+    }
+
+    /**
+     * 获取${functionName}详细信息
+     *
+     * @param id 主键
+     * @return 返回结果
+     */
+    @ApiOperation("获取${functionName}详细信息")
+    @RequiresPermissions("${permissionPrefix}:query")
+    @GetMapping(value = "/info/{id}")
+    public AjaxResult getInfo(@PathVariable("id") Long id)
+    {
+        if (ObjectUtils.isEmpty(id)) {
+            return AjaxResult.error("参数异常");
+        }
+        return AjaxResult.success(${className}Service.getInfoById(id));
+    }
+
+    /**
+     * 新增${functionName}
+     *
+     * @param ${className}Form 表单数据
+     * @return 返回结果
+     */
+    @ApiOperation("新增${functionName}")
+    @RequiresPermissions("${permissionPrefix}:add")
+    @Log(title = "${functionName}", businessType = BusinessType.INSERT)
+    @RepeatSubmit
+    @PostMapping("add")
+    public AjaxResult add(@RequestBody @Validated(DataValidateGroup.FormSave.class) ${ClassName}Form ${className}Form, BindingResult bindingResult)
+    {
+        if (bindingResult.hasErrors()) {
+            return AjaxResult.error(ValidateUtil.getValidationMsg(bindingResult));
+        }
+        return toAjax(${className}Service.add(${className}Form));
+    }
+
+    /**
+     * 修改${functionName}
+     *
+     * @param ${className}Form 表单数据
+     * @return 返回结果
+     */
+    @ApiOperation("修改${functionName}")
+    @RequiresPermissions("${permissionPrefix}:edit")
+    @Log(title = "${functionName}", businessType = BusinessType.UPDATE)
+    @PutMapping("edit")
+    public AjaxResult edit(@RequestBody @Validated({DataValidateGroup.FormUpdate.class})  ${ClassName}Form ${className}Form, BindingResult bindingResult)
+    {
+        if (bindingResult.hasErrors()) {
+            return AjaxResult.error(ValidateUtil.getValidationMsg(bindingResult));
+        }
+        return toAjax(${className}Service.edit(${className}Form));
+    }
+
+    /**
+     * 失效${functionName}
+     *
+     * @param ids 主键列表
+     * @return 返回结果
+     */
+    @ApiOperation("失效${functionName}")
+    @RequiresPermissions("${permissionPrefix}:lapse")
+    @Log(title = "${functionName}", businessType = BusinessType.LAPSE)
+    @PutMapping("/lapse/{ids}")
+    public AjaxResult lapse(@PathVariable Long[] ids)
+    {
+        if(StringUtils.isEmpty(ids)){
+            return AjaxResult.error("参数异常");
+        }
+        return toAjax(${className}Service.brandChangeStatus(Arrays.asList(ids), DelFlag.Lapse));
+    }
+
+    /**
+     * 生效${functionName}
+     *
+     * @param ids 主键列表
+     * @return 返回结果
+     */
+    @ApiOperation("生效${functionName}")
+    @RequiresPermissions("${permissionPrefix}:effect")
+    @Log(title = "${functionName}", businessType = BusinessType.EFFECT)
+    @PutMapping("/effect/{ids}")
+    public AjaxResult effect(@PathVariable Long[] ids)
+    {
+        if(StringUtils.isEmpty(ids)){
+            return AjaxResult.error("参数异常");
+        }
+        return toAjax(${className}Service.brandChangeStatus(Arrays.asList(ids), DelFlag.Effect));
+    }
+
+    /**
+     * 物理删除${functionName}
+     *
+     * @param ids 主键列表
+     * @return 返回结果
+     */
+    @ApiOperation("物理删除${functionName}")
+    @RequiresPermissions("${permissionPrefix}:remove")
+    @Log(title = "${functionName}", businessType = BusinessType.DELETE)
+    @DeleteMapping("/remove/{ids}")
+    public AjaxResult remove(@PathVariable Long[] ids)
+    {
+        if(StringUtils.isEmpty(ids)){
+            return AjaxResult.error("参数异常");
+        }
+        return toAjax(${className}Service.removeBatchByIds(Arrays.asList(ids)));
+    }
+}

@@ -1,0 +1,4 @@
+org.springframework.boot.env.EnvironmentPostProcessor=com.muzi.common.nacos.environment.CustomApplicationProperties
+
+
+  

@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.muzi.example.dao.mapper.DemoPersonMapper">
+
+    <resultMap type="com.muzi.example.entity.mysql.DemoPersonEntity" id="DemoPersonResult">
+        <result property="id"    column="id"    />
+        <result property="name"    column="name"    />
+        <result property="age"    column="age"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="adultFlag"    column="adult_flag"    />
+        <result property="money"    column="money"    />
+        <result property="birDate"    column="bir_date"    />
+        <result property="birTime"    column="bir_time"    />
+        <result property="remark"    column="remark"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="recordVersion"    column="record_version"    />
+    </resultMap>
+
+    <sql id="DemoPersonVOCols">
+        `id`,
+        `name`,
+        `age`,
+        `start_time`,
+        `adult_flag`,
+        `money`,
+        `bir_date`,
+        `bir_time`,
+        `remark`,
+        `create_time`,
+        `create_by`,
+        `update_time`,
+        `update_by`,
+        `del_flag`,
+        `record_version`
+    </sql>
+
+    <sql id="insertBodySql">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `name`,
+            `age`,
+            `start_time`,
+            `adult_flag`,
+            `money`,
+            `bir_date`,
+            `bir_time`,
+            `remark`,
+            `create_time`,
+            `create_by`,
+            `update_time`,
+            `update_by`,
+            `del_flag`,
+            `record_version`,
+        </trim>
+        values
+        <foreach collection="list" item="item" index="index" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                #{item.name},
+                #{item.age},
+                #{item.startTime},
+                #{item.adultFlag},
+                #{item.money},
+                #{item.birDate},
+                #{item.birTime},
+                #{item.remark},
+                #{item.createTime},
+                #{item.createBy},
+                #{item.updateTime},
+                #{item.updateBy},
+                #{item.delFlag},
+                #{item.recordVersion},
+            </trim>
+        </foreach>
+    </sql>
+
+    <select id="getDataTable" resultType="com.muzi.example.page.vo.DemoPersonVO">
+        select
+        person.id as id,
+        person.name as name,
+        person.age as age,
+        person.start_time as startTime,
+        person.adult_flag as adultFlag,
+        person.money as money,
+        person.bir_date as birDate,
+        person.bir_time as birTime,
+        person.remark as remark,
+        person.create_time as createTime,
+        person.create_by as createBy,
+        person.update_time as updateTime,
+        person.update_by as updateBy,
+        person.del_flag as delFlag,
+        person.record_version as recordVersion
+        from demo_person as person
+        <where>
+            <if test="idList != null and idList.size() > 0">
+                and person.id in
+                <foreach collection="idList" open="(" separator="," close=")" item="item">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="id != null ">
+                and person.id = #{id}
+            </if>
+            <if test="name != null  and name != ''">
+                and person.name like concat('%', #{name}, '%')
+            </if>
+            <if test="age != null ">
+                and person.age = #{age}
+            </if>
+            <if test="startTimeRange != null and startTimeRange.size() >= 2">
+                and person.start_time between
+                #{startTimeRange[0]} and #{startTimeRange[1]}
+            </if>
+            <if test="startTime != null ">
+                and person.start_time = #{startTime}
+            </if>
+            <if test="adultFlag != null ">
+                and person.adult_flag = #{adultFlag}
+            </if>
+            <if test="money != null ">
+                and person.money = #{money}
+            </if>
+            <if test="birDate != null ">
+                and person.bir_date = #{birDate}
+            </if>
+            <if test="birTime != null ">
+                and person.bir_time = #{birTime}
+            </if>
+            <if test="remark != null  and remark != ''">
+                and person.remark = #{remark}
+            </if>
+            <if test="createTime != null ">
+                and person.create_time = #{createTime}
+            </if>
+            <if test="createBy != null  and createBy != ''">
+                and person.create_by = #{createBy}
+            </if>
+            <if test="updateTime != null ">
+                and person.update_time = #{updateTime}
+            </if>
+            <if test="updateBy != null  and updateBy != ''">
+                and person.update_by = #{updateBy}
+            </if>
+            <if test="delFlag != null ">
+                and person.del_flag = #{delFlag}
+            </if>
+            <if test="recordVersion != null ">
+                and person.record_version = #{recordVersion}
+            </if>
+        </where>
+    </select>
+
+    <select id="getInfoById" resultType="com.muzi.example.page.vo.DemoPersonVO">
+        select
+            person.id as id,
+            person.name as name,
+            person.age as age,
+            person.start_time as startTime,
+            person.adult_flag as adultFlag,
+            person.money as money,
+            person.bir_date as birDate,
+            person.bir_time as birTime,
+            person.remark as remark,
+            person.create_time as createTime,
+            person.create_by as createBy,
+            person.update_time as updateTime,
+            person.update_by as updateBy,
+            person.del_flag as delFlag,
+            person.record_version as recordVersion
+        from demo_person as person
+        where person.id = #{id}
+    </select>
+
+    <insert id="batchInsert" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into demo_person
+        <include refid="insertBodySql"></include>
+    </insert>
+
+    <insert id="batchInsertIgnoreUnique" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity" useGeneratedKeys="true" keyProperty="id">
+        insert ignore into demo_person
+        <include refid="insertBodySql"></include>
+    </insert>
+
+    <insert id="batchInsertUpdateUnique" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into demo_person
+        <include refid="insertBodySql"></include>
+        ON DUPLICATE KEY UPDATE
+        <trim suffixOverrides=",">
+            `name` =values(`name`),
+            `age` =values(`age`),
+            `start_time` =values(`start_time`),
+            `adult_flag` =values(`adult_flag`),
+            `money` =values(`money`),
+            `bir_date` =values(`bir_date`),
+            `bir_time` =values(`bir_time`),
+            `remark` =values(`remark`),
+            `create_time` =values(`create_time`),
+            `create_by` =values(`create_by`),
+            `update_time` =values(`update_time`),
+            `update_by` =values(`update_by`),
+            `del_flag` =values(`del_flag`),
+            `record_version` =values(`record_version`),
+        </trim>
+    </insert>
+
+    <update id="updateByIdAndVersion" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity">
+        update demo_person
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="entity.name != null and entity.name != ''">
+                name = #{entity.name},
+            </if>
+            <if test="entity.age != null">
+                age = #{entity.age},
+            </if>
+            <if test="entity.startTime != null">
+                start_time = #{entity.startTime},
+            </if>
+            <if test="entity.adultFlag != null">
+                adult_flag = #{entity.adultFlag},
+            </if>
+            <if test="entity.money != null">
+                money = #{entity.money},
+            </if>
+            <if test="entity.birDate != null">
+                bir_date = #{entity.birDate},
+            </if>
+            <if test="entity.birTime != null">
+                bir_time = #{entity.birTime},
+            </if>
+            <if test="entity.remark != null">
+                remark = #{entity.remark},
+            </if>
+            update_time = #{entity.updateTime},
+            update_by = #{entity.updateBy},
+            record_version =record_version+1
+        </trim>
+        where id =#{entity.id} and record_version=#{entity.recordVersion};
+    </update>
+
+    <update id="moreUpdateByIdAndVersion" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity">
+        <foreach collection="list" item="item">
+            update demo_person
+            <trim prefix="SET" suffixOverrides=",">
+                <if test="item.name != null and item.name != ''">
+                    name = #{item.name},
+                </if>
+                <if test="item.age != null">
+                    age = #{item.age},
+                </if>
+                <if test="item.startTime != null">
+                    start_time = #{item.startTime},
+                </if>
+                <if test="item.adultFlag != null">
+                    adult_flag = #{item.adultFlag},
+                </if>
+                <if test="item.money != null">
+                    money = #{item.money},
+                </if>
+                <if test="item.birDate != null">
+                    bir_date = #{item.birDate},
+                </if>
+                <if test="item.birTime != null">
+                    bir_time = #{item.birTime},
+                </if>
+                <if test="item.remark != null">
+                    remark = #{item.remark},
+                </if>
+                update_time = #{item.updateTime},
+                update_by = #{item.updateBy},
+                record_version =record_version+1
+            </trim>
+            where id =#{item.id} and record_version=#{item.recordVersion};
+        </foreach>
+    </update>
+
+    <update id="batchUpdateByIdAndVersion" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity">
+        update demo_person
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="entity.name != null and entity.name != ''">
+                name = #{entity.name},
+            </if>
+            <if test="entity.age != null">
+                age = #{entity.age},
+            </if>
+            <if test="entity.startTime != null">
+                start_time = #{entity.startTime},
+            </if>
+            <if test="entity.adultFlag != null">
+                adult_flag = #{entity.adultFlag},
+            </if>
+            <if test="entity.money != null">
+                money = #{entity.money},
+            </if>
+            <if test="entity.birDate != null">
+                bir_date = #{entity.birDate},
+            </if>
+            <if test="entity.birTime != null">
+                bir_time = #{entity.birTime},
+            </if>
+            <if test="entity.remark != null">
+                remark = #{entity.remark},
+            </if>
+            update_time = #{entity.updateTime},
+            update_by = #{entity.updateBy},
+            record_version =record_version+1
+        </trim>
+        where (id,record_version) in
+        <foreach collection="list" open="(" separator="," close=")" item="item">
+            (#{item.id},#{item.recordVersion})
+        </foreach>
+    </update>
+
+    <update id="batchUpdateDelFlagByIdAndVersion" parameterType="com.muzi.example.entity.mysql.DemoPersonEntity">
+        update demo_person
+        <trim prefix="SET" suffixOverrides=",">
+            del_flag=#{delFlag},
+            record_version =record_version+1
+        </trim>
+        where (id,record_version) in
+        <foreach collection="list" open="(" separator="," close=")" item="item">
+            (#{item.id},#{item.recordVersion})
+        </foreach>
+    </update>
+
+
+</mapper>
